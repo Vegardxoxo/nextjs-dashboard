@@ -59,7 +59,7 @@ export type CustomersTableType = {
   id: string;
   name: string;
   email: string;
-  image_url: string;
+  image_url: string;w
   total_invoices: number;
   total_pending: number;
   total_paid: number;
