@@ -1,13 +1,40 @@
-name: Checkout
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+name: Checkout Multiple Repositories
 on: [ push ]
+
 jobs:
-  Checkout:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
+      # 1) (Optional) Check out the current repository
+      - name: Check out current repository
         uses: actions/checkout@v4
         with:
+          # If you need the source code of the current repo in this job,
+          # leave this as is. If you only want the other repo, you can remove this step.
+          # By default, actions/checkout checks out the current repo.
+          repository: ${{ github.repository }}
+
+      # 2) Check out the other repository
+      - name: Check out another repository
+        uses: actions/checkout@v4
+        with:
+          # Replace <owner>/<repo> with the actual owner/repo name of the repository you want
           repository: 'Vegardxoxo/tail'
-      - name: ls after checkout
-        run: ls
+
+          # The path determines where the second repository will be placed.
+          # Adjust the path as needed.
+          path: 'tail-repo'
+
+          # Use the GITHUB_TOKEN or a Personal Access Token if you need
+          # additional permissions (e.g., private repos).
+          # GITHUB_TOKEN typically suffices for reading a public repo
+          # under the same organization or user.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3) Show that both repositories are present
+      - name: Show contents
+        run: |
+          echo "Current directory contents:"
+          ls -la
+          echo "Contents of tail-repo:"
+          ls -la tail-repo
