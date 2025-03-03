@@ -28,10 +28,9 @@ jobs:
       - name: Send test result to teacher repo
         run: |
           TEST_RESULTS="$(cat test-results.json | base64 | tr -d '\n')"
-          
-          # Bygg JSON med shell-escaping (OBS! fort gjort å trå feil med anførsler)
           JSON_STRING="{\"repo_name\": \"${{ github.repository }}\", \"commit_sha\": \"${{ github.sha }}\", \"test_results\": \"${TEST_RESULTS}\"}"
-      
+          echo "JSON Payload: $JSON_STRING"
+
           gh api \
             repos/Vegardxoxo/Master/dispatches \
             --field event_type=student_test_results \
