@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies and run tests
         run: |
-          npm ci
+          npm install
           # Adjust this command as needed. This example generates a coverage report.
           npm test -- --json --outputFile=test-results.json
 
