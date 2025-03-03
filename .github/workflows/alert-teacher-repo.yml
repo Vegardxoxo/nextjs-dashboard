@@ -45,10 +45,13 @@ jobs:
         "event_type": "student_test_results",
         "client_payload": {
           "student_repo": "${{ github.repository }}",
-          "run_id": "${{ github.run_id }}"
+          "run_id": "${{ github.run_id }}",
+          "summary": "Tests passed: X, failed: Y",
+          "artifact": "test-results"  # reference to the uploaded artifact
         }
       }
       EOF
       env:
         GITHUB_TOKEN: ${{ secrets.TEACHER_TOKEN }}
+
 
