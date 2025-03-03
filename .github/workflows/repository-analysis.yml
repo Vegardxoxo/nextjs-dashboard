@@ -33,7 +33,7 @@ jobs:
           JSON_STRING="{\"repo_name\": \"${{ github.repository }}\", \"commit_sha\": \"${{ github.sha }}\", \"test_results\": \"${TEST_RESULTS}\"}"
       
           gh api \
-            repos/<YOUR_USERNAME_OR_ORG>/<TEACHER_REPO>/dispatches \
+            repos/Vegardxoxo/Master/dispatches \
             --field event_type=student_test_results \
             --raw-field client_payload="$JSON_STRING"
         env:
