@@ -2,9 +2,9 @@ name: Send Test Results to Main Repo using API
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   report-results:
