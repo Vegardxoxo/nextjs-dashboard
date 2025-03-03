@@ -1,0 +1,8 @@
+{
+  "event_type": "student_test_results",
+  "client_payload": {
+    "student_repo": "${{ github.repository }}",
+    "run_id": "${{ github.run_id }}"
+  }
+}
+

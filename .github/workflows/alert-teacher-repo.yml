@@ -36,14 +36,23 @@ jobs:
 
       - name: Notify teacher repo
         run: |
-          gh api \
-            repos/Vegardxoxo/Master/dispatches \
+          cat <<EOF > payload.json
+          {
+            "event_type": "student_test_results",
+            "client_payload": {
+               "student_repo": "${{ github.repository }}",
+               "run_id": "${{ github.run_id }}"
+            }
+          }
+          EOF
+      
+          gh api repos/Vegardxoxo/Master/dispatches \
             --method POST \
             --header "Accept: application/vnd.github+json" \
-            --field event_type=student_test_results \
-            --field client_payload:='{"student_repo": "${{ github.repository }}", "run_id": "${{ github.run_id }}"}'
+            --input payload.json
         env:
           GITHUB_TOKEN: ${{ secrets.TEACHER_TOKEN }}
+
 
 
 
