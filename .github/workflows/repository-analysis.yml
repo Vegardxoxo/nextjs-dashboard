@@ -25,16 +25,17 @@ jobs:
           # Adjust this command as needed. This example generates a coverage report.
           npm test -- --json --outputFile=test-results.json
 
-      - name: Update test result in main repository
+      - name: Send test result to teacher repo
         run: |
-          TEST_RESULTS=$(cat test-results.json | base64 | tr -d '\n')
+          TEST_RESULTS="$(cat test-results.json | base64 | tr -d '\n')"
+          
+          # Bygg JSON med shell-escaping (OBS! fort gjort å trå feil med anførsler)
+          JSON_STRING="{\"repo_name\": \"${{ github.repository }}\", \"commit_sha\": \"${{ github.sha }}\", \"test_results\": \"${TEST_RESULTS}\"}"
+      
           gh api \
-            repos/Vegardxoxo/master/dispatches \
-            -F event_type=student_test_results \
-            -F client_payload="{ \
-                \"repo_name\": \"${{ github.repository }}\", \
-                \"commit_sha\": \"${{ github.sha }}\", \
-                \"test_results\": \"${TEST_RESULTS}\" \
-            }"
+            repos/<YOUR_USERNAME_OR_ORG>/<TEACHER_REPO>/dispatches \
+            --field event_type=student_test_results \
+            --raw-field client_payload="$JSON_STRING"
         env:
           GITHUB_TOKEN: ${{ secrets.TEACHER_TOKEN }}
+
