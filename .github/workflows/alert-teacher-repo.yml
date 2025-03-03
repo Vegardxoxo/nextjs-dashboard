@@ -1,15 +1,12 @@
 name: Test and Notify
-
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
 jobs:
   test-and-notify:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout student repository
         uses: actions/checkout@v4
@@ -25,28 +22,28 @@ jobs:
       - name: Run tests (generate coverage)
         run: |
           npm test -- --json --outputFile=test-results.json
-          # Her kjøres testene og genererer coverage eller evt. test-results
+          # Here tests are executed and generate coverage or test results
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage/
-          # Juster stien om coverage havner et annet sted i prosjektet
+          # Adjust the path if the coverage folder is located elsewhere
 
       - name: Notify teacher repo
         run: |
           # Create a minimal payload file containing only the reference data.
           cat <<EOF > payload.json
-      {
-        "event_type": "student_test_results",
-        "client_payload": {
-          "student_repo": "${{ github.repository }}",
-          "run_id": "${{ github.run_id }}"
-        }
-      }
-      EOF
-      
+          {
+            "event_type": "student_test_results",
+            "client_payload": {
+              "student_repo": "${{ github.repository }}",
+              "run_id": "${{ github.run_id }}"
+            }
+          }
+          EOF
+          
           # Send the repository dispatch event using the payload file.
           gh api repos/Vegardxoxo/Master/dispatches \
             --method POST \
@@ -54,8 +51,3 @@ jobs:
             --input payload.json
         env:
           GITHUB_TOKEN: ${{ secrets.TEACHER_TOKEN }}
-
-
-
-
-
