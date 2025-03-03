@@ -36,15 +36,12 @@ jobs:
 
       - name: Notify teacher repo
         run: |
-          TEST_RESULTS="$(cat test-results.json | base64 | tr -d '\n')"
-          JSON_STRING="{\"repo_name\": \"Vegardxoxo/nextjs-dashboard\", \"commit_sha\": \"${{ github.run_id }}\", \"test_results\": \"${TEST_RESULTS}\"}"
-          echo "JSON Payload: $JSON_STRING"
           gh api \
             repos/Vegardxoxo/Master/dispatches \
             --method POST \
             --header "Accept: application/vnd.github+json" \
             --field event_type=student_test_results \
-            --field client_payload:="$JSON_STRING"
+            --field client_payload:='{"student_repo": "${{ github.repository }}", "run_id": "${{ github.run_id }}"}'
         env:
           GITHUB_TOKEN: ${{ secrets.TEACHER_TOKEN }}
 
