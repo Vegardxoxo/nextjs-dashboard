@@ -28,7 +28,7 @@ jobs:
           # Her kjøres testene og genererer coverage eller evt. test-results
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage/
