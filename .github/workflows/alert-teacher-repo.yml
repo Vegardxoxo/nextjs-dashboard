@@ -1,0 +1,47 @@
+name: Test and Notify
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test-and-notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout student repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests (generate coverage)
+        run: |
+          npm test -- --json --outputFile=test-results.json
+          # Her kjøres testene og genererer coverage eller evt. test-results
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage/
+          # Juster stien om coverage havner et annet sted i prosjektet
+
+      - name: Notify teacher repo
+        run: |
+          gh api \
+            repos/Vegardxoxo/Master/dispatches \
+            --field event_type=student_test_results \
+            --raw-field client_payload="{ \
+              \"student_repo\": \"${{ github.repository }}\", \
+              \"run_id\": \"${{ github.run_id }}\" \
+            }"
+        env:
+          GITHUB_TOKEN: ${{ secrets.TEACHER_TOKEN }}
