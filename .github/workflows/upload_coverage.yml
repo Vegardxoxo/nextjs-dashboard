@@ -44,7 +44,7 @@ jobs:
           if ! command -v jq &> /dev/null; then
               sudo apt-get update && sudo apt-get install -y jq
           fi
-
+      
           # Find coverage report file
           if [ -f "coverage/coverage-summary.json" ]; then
             COVERAGE_FILE="coverage/coverage-summary.json"
@@ -53,7 +53,7 @@ jobs:
           else
             echo "Looking for any coverage JSON files..."
             COVERAGE_FILE=$(find coverage -name "*.json" | head -n 1)
-          
+            
             if [ -z "$COVERAGE_FILE" ]; then
               echo "No coverage JSON files found"
               exit 1
@@ -61,24 +61,32 @@ jobs:
           fi
           
           echo "Using coverage file: $COVERAGE_FILE"
-
-          # Extract the full coverage data including file-level details
-          if grep -q "total" "$COVERAGE_FILE"; then
-            # Get both total and file-specific coverage data
-            COVERAGE_DATA=$(jq '.' "$COVERAGE_FILE")
+          
+          # Read the raw coverage data
+          RAW_COVERAGE=$(cat $COVERAGE_FILE)
+          
+          # Extract metrics if present in a standard format
+          if jq -e '.total' $COVERAGE_FILE > /dev/null 2>&1; then
+            STATEMENTS=$(jq -r '.total.statements.pct' $COVERAGE_FILE)
+            BRANCHES=$(jq -r '.total.branches.pct' $COVERAGE_FILE)
+            FUNCTIONS=$(jq -r '.total.functions.pct' $COVERAGE_FILE)
+            LINES=$(jq -r '.total.lines.pct' $COVERAGE_FILE)
+            
+            METRICS="{\"statements\":$STATEMENTS,\"branches\":$BRANCHES,\"functions\":$FUNCTIONS,\"lines\":$LINES}"
           else
-            echo "Unexpected coverage file format"
-            COVERAGE_DATA="{}"
+            echo "Standard metrics not found in coverage file"
+            METRICS="{}"
           fi
-
-          # Create a detailed payload with repository and commit info
+      
+          # Create a simplified payload with raw coverage data
           PAYLOAD=$(jq -n \
             --arg message "Test coverage report" \
             --arg repo_id "$REPO_ID" \
             --arg repo_name "$REPO_NAME" \
             --arg commit "$COMMIT_SHA" \
             --arg branch "$BRANCH_NAME" \
-            --argjson coverage_data "$COVERAGE_DATA" \
+            --argjson metrics "$METRICS" \
+            --argjson raw_coverage "$RAW_COVERAGE" \
             '{
               message: $message,
               repository_id: $repo_id,
@@ -86,39 +94,21 @@ jobs:
               commit: $commit,
               branch: $branch,
               timestamp: (now | todate),
-              coverage_data: $coverage_data,
-              metrics: {
-                statements: $coverage_data.total.statements.pct,
-                branches: $coverage_data.total.branches.pct,
-                functions: $coverage_data.total.functions.pct,
-                lines: $coverage_data.total.lines.pct
-              },
-              uncovered_files: [
-                $coverage_data | to_entries[] | 
-                select(.key != "total") |
-                select(.value.statements.pct < 100 or .value.branches.pct < 100 or .value.functions.pct < 100 or .value.lines.pct < 100) |
-                {
-                  file: .key,
-                  statements: .value.statements.pct,
-                  branches: .value.branches.pct,
-                  functions: .value.functions.pct,
-                  lines: .value.lines.pct,
-                  uncovered_lines: .value.lines.skipped
-                }
-              ]
+              metrics: $metrics,
+              raw_coverage_data: $raw_coverage
             }')
-
-          # Send the detailed coverage data to the API endpoint
+      
+          # Send the coverage data to the API endpoint
           HTTP_STATUS=$(curl -s -o response.txt -w "%{http_code}" \
             -X POST "$API_ENDPOINT" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $API_KEY" \
             -d "$PAYLOAD")
-
+      
           # Check if the request was successful
           if [[ "$HTTP_STATUS" -ge 200 && "$HTTP_STATUS" -lt 300 ]]; then
             echo "Coverage report successfully sent! Response:"
-            cat response.txt
+            cat response.txt | jq .
           else
             echo "Failed to send coverage report. Status code: $HTTP_STATUS"
             cat response.txt
