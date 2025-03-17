@@ -25,9 +25,12 @@ jobs:
         env:
           API_ENDPOINT: ${{ secrets.API_ENDPOINT }}
           API_KEY: ${{ secrets.WEBHOOK_SECRET }}
+          REPO_ID: ${{ github.repository_id }}
+          REPO_NAME: ${{ github.repository }}
         run: |
           # Define a simple payload
-          PAYLOAD='{"message": "Hello World"}'
+          PAYLOAD="{\"message\": \"Hello World\", \"repository_id\": \"$REPO_ID\", \"repository_name\": \"$REPO_NAME\"}"
+
 
           # Send the data to the API endpoint
           HTTP_STATUS=$(curl -s -o response.txt -w "%{http_code}" \
