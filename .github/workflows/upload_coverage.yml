@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'pnpm'
 
       - name: Install dependencies
         run: npm install
@@ -54,7 +53,7 @@ jobs:
           else
             echo "Looking for any coverage JSON files..."
             COVERAGE_FILE=$(find coverage -name "*.json" | head -n 1)
-            
+          
             if [ -z "$COVERAGE_FILE" ]; then
               echo "No coverage JSON files found"
               exit 1
