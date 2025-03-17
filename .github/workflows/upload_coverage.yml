@@ -40,11 +40,6 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          # Ensure jq is installed
-          if ! command -v jq &> /dev/null; then
-              sudo apt-get update && sudo apt-get install -y jq
-          fi
-
           # Find coverage report file
           if [ -f "coverage/coverage-summary.json" ]; then
             COVERAGE_FILE="coverage/coverage-summary.json"
@@ -53,76 +48,31 @@ jobs:
           else
             echo "Looking for any coverage JSON files..."
             COVERAGE_FILE=$(find coverage -name "*.json" | head -n 1)
-
+          
             if [ -z "$COVERAGE_FILE" ]; then
               echo "No coverage JSON files found"
               exit 1
             fi
           fi
-
+          
           echo "Using coverage file: $COVERAGE_FILE"
-
-          # Check if it's a coverage-final.json file or different format
-          if [[ "$COVERAGE_FILE" == *"coverage-final.json" ]]; then
-            echo "Processing Jest coverage-final.json format"
-
-            # Use the console output values directly instead of parsing the complex JSON
-            # This is a workaround since the Jest coverage-final.json format is too complex
-            # for reliable shell-based JSON parsing
-            STATEMENTS=91.66
-            BRANCHES=80
-            FUNCTIONS=66.66
-            LINES=91.66
-
-            echo "Using coverage metrics from test output:"
-            echo "Statements: $STATEMENTS%"
-            echo "Branches: $BRANCHES%"
-            echo "Functions: $FUNCTIONS%"
-            echo "Lines: $LINES%"
-
-            # Create a simple metrics JSON
-            METRICS="{\"statements\":$STATEMENTS,\"branches\":$BRANCHES,\"functions\":$FUNCTIONS,\"lines\":$LINES}"
-
-          elif jq -e '.total' $COVERAGE_FILE > /dev/null 2>&1; then
-            # For standard coverage-summary.json format
-            echo "Processing standard coverage format with .total field"
-            STATEMENTS=$(jq -r '.total.statements.pct' $COVERAGE_FILE)
-            BRANCHES=$(jq -r '.total.branches.pct' $COVERAGE_FILE)
-            FUNCTIONS=$(jq -r '.total.functions.pct' $COVERAGE_FILE)
-            LINES=$(jq -r '.total.lines.pct' $COVERAGE_FILE)
-
-            METRICS="{\"statements\":$STATEMENTS,\"branches\":$BRANCHES,\"functions\":$FUNCTIONS,\"lines\":$LINES}"
-          else
-            echo "Could not determine coverage format"
-            # Create simple metrics JSON with zeros as fallback
-            METRICS="{\"statements\":0,\"branches\":0,\"functions\":0,\"lines\":0}"
-          fi
-
-          # Create payload with extracted metrics
-          PAYLOAD=$(jq -n \
-            --arg message "Test coverage report" \
-            --arg repo_id "$REPO_ID" \
-            --arg repo_name "$REPO_NAME" \
-            --arg commit "$COMMIT_SHA" \
-            --arg branch "$BRANCH_NAME" \
-            --argjson metrics "$METRICS" \
-            '{
-              message: $message,
-              repository_id: $repo_id,
-              repository_name: $repo_name,
-              commit: $commit,
-              branch: $branch,
-              timestamp: (now | todate),
-              metrics: $metrics
-            }')
-
-          # Send the coverage data to the API endpoint
+          
+          # Send the coverage report to the API endpoint
           HTTP_STATUS=$(curl -s -o response.txt -w "%{http_code}" \
             -X POST "$API_ENDPOINT" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $API_KEY" \
-            -d "$PAYLOAD")
-
+            -d @- << 'EOF'
+          {
+            "repository_id": "${REPO_ID}",
+            "repository_name": "${REPO_NAME}",
+            "commit": "${COMMIT_SHA}",
+            "branch": "${BRANCH_NAME}",
+            "coverage_report": $(cat ${COVERAGE_FILE})
+          }
+          EOF
+          )
+          
           # Check if the request was successful
           if [[ "$HTTP_STATUS" -ge 200 && "$HTTP_STATUS" -lt 300 ]]; then
             echo "Coverage report successfully sent! Response:"
