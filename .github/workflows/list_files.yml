@@ -1,4 +1,4 @@
-name: Upload Test Coverage
+name: Upload Repository File List
 on:
   workflow_dispatch:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test-and-report-coverage:
+  list-and-report-files:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -18,23 +18,31 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+      - name: List files in repository
+        id: list-files
+        run: |
+          # Create temporary JSON file with the file list
+          echo '{"files":[' > file_list.json
+          
+          # List all files, excluding .git directory, format as JSON array
+          find . -type f -not -path "*/\.git/*" -not -path "*/node_modules/*" | sort | sed 's/^\.\///g' | \
+          awk 'BEGIN {ORS=""} 
+          {
+            if (NR > 1) print ","; 
+            print "{\"path\":\"" $0 "\"}"
+          }' >> file_list.json
+          
+          echo ']}' >> file_list.json
 
-      - name: Run tests with coverage
-        run: npm test -- --coverage --coverageReporters="json-summary"
-
-      - name: Send coverage report to application
+      - name: Send file list to application
         env:
-          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/coverage
+          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/files
           API_KEY: ${{ secrets.WEBHOOK_SECRET }}
           REPO_ID: ${{ github.repository_id }}
           REPO_NAME: ${{ github.repository }}
           COMMIT_SHA: ${{ github.sha }}
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          COVERAGE_FILE="coverage/coverage-summary.json"
-          
           # Create and send payload
           curl -s \
             -X POST "$API_ENDPOINT" \
@@ -45,5 +53,5 @@ jobs:
               \"repository_name\": \"$REPO_NAME\",
               \"commit\": \"$COMMIT_SHA\",
               \"branch\": \"$BRANCH_NAME\",
-              \"coverage_report\": $(cat $COVERAGE_FILE)
+              \"file_list\": $(cat file_list.json)
             }"
