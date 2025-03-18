@@ -13,19 +13,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: List files in repository
+      - name: List committed files in repository
         id: list-files
         run: |
           # Create temporary JSON file with the file list
           echo '{"files":[' > file_list.json
           
-          # List all files, excluding .git directory, format as JSON array
-          find . -type f -not -path "*/\.git/*" -not -path "*/node_modules/*" | sort | sed 's/^\.\///g' | \
+          # Use git ls-files to list only committed files
+          git ls-files | sort | \
           awk 'BEGIN {ORS=""} 
           {
             if (NR > 1) print ","; 
@@ -36,7 +31,7 @@ jobs:
 
       - name: Send file list to application
         env:
-          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/files
+          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/github-actions/files
           API_KEY: ${{ secrets.WEBHOOK_SECRET }}
           REPO_ID: ${{ github.repository_id }}
           REPO_NAME: ${{ github.repository }}
