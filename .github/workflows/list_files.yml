@@ -18,20 +18,35 @@ jobs:
         run: |
           # Create temporary JSON file with the file list
           echo '{"files":[' > file_list.json
+
+          # First check if node_modules is committed
+          if git ls-files | grep -q "^node_modules/"; then
+            # If node_modules exists, add it as a single entry without iterating through it
+            echo '{"path":"node_modules"},' >> file_list.json
+            
+            # Then add all other files except those in node_modules
+            git ls-files | grep -v "^node_modules/" | sort | \
+            awk 'BEGIN {ORS=""} 
+            {
+              print "{\"path\":\"" $0 "\"},"; 
+            }' >> file_list.json
+          else
+            # If no node_modules, just add all files
+            git ls-files | sort | \
+            awk 'BEGIN {ORS=""} 
+            {
+              if (NR > 1) print ","; 
+              print "{\"path\":\"" $0 "\"}"
+            }' >> file_list.json
+          fi
           
-          # Use git ls-files to list only committed files
-          git ls-files | sort | \
-          awk 'BEGIN {ORS=""} 
-          {
-            if (NR > 1) print ","; 
-            print "{\"path\":\"" $0 "\"}"
-          }' >> file_list.json
-          
+          # Fix the trailing comma if it exists
+          sed -i '$ s/,$//' file_list.json
           echo ']}' >> file_list.json
 
       - name: Send file list to application
         env:
-          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/files
+          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/github-actions/files
           API_KEY: ${{ secrets.WEBHOOK_SECRET }}
           REPO_ID: ${{ github.repository_id }}
           REPO_NAME: ${{ github.repository }}
