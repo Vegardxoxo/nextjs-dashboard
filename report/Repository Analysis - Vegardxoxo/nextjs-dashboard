@@ -1,0 +1,16 @@
+# Repository Analysis - Vegardxoxo/nextjs-dashboard
+
+## Summary
+
+This report provides an analysis of the repository Vegardxoxo/nextjs-dashboard, focusing on commit quality, test coverage, and potential sensitive files.
+
+## Commit Frequency Analysis
+
+![Commit Frequency Chart](./images/COMMIT_FREQUENCY-Vegardxoxo-nextjs-dashboard-1744273829024.png)
+
+### Recommendations
+
+Maintain a consistent commit frequency to ensure steady progress and easier code reviews. Aim for smaller, more frequent commits rather than large, infrequent ones to reduce merge conflicts and improve collaboration.
+
+---
+Generated on 10.4.2025 by Git Workflow Analysis Tool
