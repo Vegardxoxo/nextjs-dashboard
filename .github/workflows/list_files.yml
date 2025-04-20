@@ -46,7 +46,7 @@ jobs:
 
       - name: Send file list to application
         env:
-          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/files
+          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/github-actions//files
           API_KEY: ${{ secrets.WEBHOOK_SECRET }}
           REPO_ID: ${{ github.repository_id }}
           REPO_NAME: ${{ github.repository }}
