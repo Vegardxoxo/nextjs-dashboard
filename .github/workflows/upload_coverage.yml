@@ -26,7 +26,7 @@ jobs:
 
       - name: Send coverage report to application
         env:
-          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}/github-actions/coverage
+          API_ENDPOINT: ${{ secrets.API_ENDPOINT }}github-actions/coverage
           API_KEY: ${{ secrets.WEBHOOK_SECRET }}
           REPO_ID: ${{ github.repository_id }}
           REPO_NAME: ${{ github.repository }}
