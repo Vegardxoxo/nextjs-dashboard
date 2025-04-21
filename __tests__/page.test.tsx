@@ -16,4 +16,10 @@ describe('page', () => {
         expect(text).tobeInTheDocument();
     })
 
+    it("should succeed", () => {
+        render(<Page/>)
+        const text = screen.getByText("Log in")
+        expect(text).tobeInTheDocument();
+    })
+
 })
