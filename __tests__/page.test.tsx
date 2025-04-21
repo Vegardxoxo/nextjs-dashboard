@@ -10,4 +10,10 @@ describe('page', () => {
         expect(text).toBeInTheDocument();
     })
 
+    it('should fail', () => {
+        render(<Page/>)
+        const text = screen.getByText('Next.js Learn wefwefwef')
+        expect(text).tobeInTheDocument();
+    })
+
 })
